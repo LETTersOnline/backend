@@ -1,0 +1,27 @@
+class Choices:
+    @classmethod
+    def choices(cls):
+        d = cls.__dict__
+        ret = [d[item] for item in d.keys() if not item.startswith("__")]
+        ret.sort(reverse=True)
+        return ret
+
+    @classmethod
+    def model_choices(cls):
+        # 通过这种方式生成model当中使用的choices，显示为属性名，存储为属性值
+        d = cls.__dict__
+        ret = [(d[item], item) for item in d.keys() if not item.startswith("__")]
+        ret.sort(reverse=True)
+        return ret
+
+
+class RegisterMethod(Choices):
+    """
+    三种注册类型设置
+    1. 无限制
+    2. 邀请码注册，管理员可创建邀请码并设置对应的次数，每有一个人注册即减少一个邀请码
+    3. 禁止注册
+    """
+    ANY = 'any'
+    CODE = 'code'
+    BAN = 'ban'
