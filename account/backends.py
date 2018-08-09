@@ -1,5 +1,6 @@
 from django.contrib.auth.backends import ModelBackend
 from account.models import User
+from account.serializers import UserSerializer
 
 
 class AuthBackend(ModelBackend):
@@ -16,3 +17,13 @@ class AuthBackend(ModelBackend):
             if user.check_password(password):
                 return user
         return None
+
+
+def jwt_response_payload_handler(token, user=None, request=None):
+    """
+    自定义jwt后端序列化函数
+    """
+    return {
+        'token': token,
+        'user': UserSerializer(user, context={'request': request}).data
+    }

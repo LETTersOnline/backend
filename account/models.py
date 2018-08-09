@@ -3,7 +3,7 @@ from django.contrib.postgres.fields import JSONField
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractBaseUser, AbstractUser
 
-from account.apps import UserType
+from TrainingOnline.constants import UserType
 
 
 class CustomUserManager(BaseUserManager):
@@ -80,11 +80,12 @@ class User(AbstractBaseUser):
     基于平台的用户属性以及拓展属性
     可为空或者有默认值
     """
-    uid = models.CharField(max_length=64, unique=True, blank=True, null=True)  # 标识号，可以是学号等
+    uid = models.CharField(max_length=64, blank=True, null=True)  # 标识号，可以是学号等
+    avatar = models.ImageField(upload_to='avatar', blank=True, null=True)
     fullname = models.CharField(max_length=128, default='佚名')
     school = models.CharField(max_length=200, blank=True, null=True)
     major = models.CharField(max_length=200, blank=True, null=True)
-    mood = models.TextField(null=True)
+    mood = models.TextField(blank=True, null=True)
 
     accepted_number = models.IntegerField(default=0)
     total_score = models.BigIntegerField(default=0)
@@ -109,4 +110,7 @@ class User(AbstractBaseUser):
     #     'field_name2': 'field_value2',
     #     ...
     # }
-    extends = JSONField(default={})
+    extends = JSONField(default={}, blank=True, null=True)
+
+    class Meta:
+        ordering = ['id']

@@ -25,3 +25,11 @@ class RegisterMethod(Choices):
     ANY = 'any'
     CODE = 'code'
     BAN = 'ban'
+
+
+class UserType(Choices):
+    REGULAR = 1  # 普通用户
+    LETTERS = 2  # LETTers队员
+    COACH = 3  # 教练
+    ADMIN = 4  # 管理员
+    SUPER_ADMIN = 5  # 超级管理员
