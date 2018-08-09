@@ -26,7 +26,7 @@ class UserAdminOrOwner(BasePermission):
 
     def has_object_permission(self, request, view, obj):
         if view.action == 'retrieve':
-            return False
+            return True
 
         if not request.user.is_authenticated:
             return False
