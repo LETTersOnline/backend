@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.postgres.fields import JSONField
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractBaseUser, AbstractUser
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 from TrainingOnline.constants import UserType
 
@@ -56,7 +58,7 @@ class User(AbstractBaseUser):
     REQUIRED_FIELDS = ['email']
 
     def __str__(self):
-        return "{}-{}".format(self.username, self.fullname)
+        return "{}-{}".format(self.username, self.profile.fullname)
 
     def has_perm(self, perm, obj=None):
         # 仅仅超级管理员才有权限进入django admin
@@ -75,11 +77,18 @@ class User(AbstractBaseUser):
         # 仅仅超级管理员才有权限进入django admin
         return self.user_type == UserType.SUPER_ADMIN
 
+    class Meta:
+        ordering = ['id']
+
+
+class Profile(models.Model):
     """
     user profile
     基于平台的用户属性以及拓展属性
     可为空或者有默认值
     """
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+
     uid = models.CharField(max_length=64, blank=True, null=True)  # 标识号，可以是学号等
     avatar = models.ImageField(upload_to='avatar', blank=True, null=True)
     fullname = models.CharField(max_length=128, default='佚名')
@@ -114,3 +123,14 @@ class User(AbstractBaseUser):
 
     class Meta:
         ordering = ['id']
+
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        Profile.objects.create(user=instance)
+
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    instance.profile.save()
