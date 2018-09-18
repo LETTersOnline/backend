@@ -13,9 +13,9 @@ class UserAdminOrOwner(BasePermission):
     delete          -> has_permission -> has_object_permission
     partial_update  -> has_permission -> has_object_permission
 
-    list:                         允许认证用户进行操作
+    list:                         允许所有用户进行操作
     create:                       允许所有用户进行操作
-    retrieve:                     允许认证用户进行操作
+    retrieve:                     允许所有用户进行操作
     update,delete,partial_update: 允许对象所属用户或者用户等级高于对象所对应等级的用户进行操作
     """
 
@@ -30,14 +30,15 @@ class UserAdminOrOwner(BasePermission):
 
         if not request.user.is_authenticated:
             return False
+
         if request.user.user_type == UserType.SUPER_ADMIN:
             return True
-        if view.action == 'retrieve':
-            return True
+
         if hasattr(obj, 'user'):
             return request.user == obj.user or request.user.user_type > obj.user.user_type
         if isinstance(obj, User):
             return request.user == obj or request.user.user_type > obj.user_type
+
         return False
 
 

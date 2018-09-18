@@ -62,3 +62,4 @@ curl -H "Authorization: JWT <your_token>" http://localhost:8000/protected-url/
 TODO: 
 - 增加一个config model，用来存储各种前端可以进行配置的项目
 - 增加一个Tracking model，用来记录用户行为: https://medium.com/@atulmishra_69567/tracking-user-login-activity-in-django-rest-framework-jwt-authentication-32e0194e77d0
+- 需要分离account和profile model

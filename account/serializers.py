@@ -1,8 +1,9 @@
-from rest_framework import serializers
 from django.conf import settings
-from account.models import User
-from TrainingOnline.constants import RegisterMethod
 from django.contrib.humanize.templatetags.humanize import naturaltime
+from rest_framework import serializers
+
+from TrainingOnline.constants import RegisterMethod
+from account.models import User
 
 
 class CustomDateTimeField(serializers.DateTimeField):
@@ -10,14 +11,23 @@ class CustomDateTimeField(serializers.DateTimeField):
         return naturaltime(value)
 
 
-class UserSerializer(serializers.ModelSerializer):
+class UserForAdminSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=True)
+    date_joined = CustomDateTimeField(read_only=True, required=False)
+    date_active = CustomDateTimeField(read_only=True, required=False)
+
+    class Meta:
+        model = User
+
+
+class UserForUserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True)
     confirm_password = serializers.CharField(write_only=True, required=True)
     # 支持注册码
     code = serializers.CharField(max_length=20, required=False, allow_blank=True)
 
-    date_joined = CustomDateTimeField()
-    date_active = CustomDateTimeField()
+    date_joined = CustomDateTimeField(read_only=True, required=False)
+    date_active = CustomDateTimeField(read_only=True, required=False)
 
     def validate(self, data):
         """
