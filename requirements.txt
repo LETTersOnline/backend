@@ -7,3 +7,4 @@ djangorestframework-jwt==1.11.0
 drf-yasg[validation]
 Pillow
 django-dynamic-preferences
+rest_condition

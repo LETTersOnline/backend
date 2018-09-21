@@ -1,6 +1,6 @@
 from django.contrib.auth.backends import ModelBackend
 from account.models import User
-from account.serializers import UserForUserSerializer
+from account.serializers import UserSerializer
 
 
 class AuthBackend(ModelBackend):
@@ -25,5 +25,5 @@ def jwt_response_payload_handler(token, user=None, request=None):
     """
     return {
         'token': token,
-        'user': UserForUserSerializer(user, context={'request': request}).data
+        'user': UserSerializer(user, context={'request': request}).data
     }

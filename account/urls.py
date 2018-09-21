@@ -7,9 +7,9 @@ from account import views
 
 urlpatterns = [
     # path('register/', views.UserRegisterAPI.as_view(), name='register'),
-    path('login/', obtain_jwt_token, name='login'),
-    path('refresh/', refresh_jwt_token, name='refresh'),
-    path('verify/', verify_jwt_token, name='verify'),
+    # path('login/', obtain_jwt_token, name='login'),
+    # path('refresh/', refresh_jwt_token, name='refresh'),
+    # path('verify/', verify_jwt_token, name='verify'),
 ]
 
 router = routers.SimpleRouter()

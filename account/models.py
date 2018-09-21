@@ -5,7 +5,7 @@ from django.contrib.auth.models import AbstractBaseUser, AbstractUser
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from TrainingOnline.constants import UserType
+from core.constants import UserType
 
 
 class CustomUserManager(BaseUserManager):
@@ -15,12 +15,7 @@ class CustomUserManager(BaseUserManager):
         if not email:
             raise ValueError('Users must have an email address')
         user = self.model(username=username,
-                          email=self.normalize_email(email),
-                          uid=extra_fields.get('uid', None),
-                          fullname=extra_fields.get('fullname', '佚名'),
-                          school=extra_fields.get('school', None),
-                          major=extra_fields.get('major', None),
-                          mood=extra_fields.get('mood', None),
+                          email=self.normalize_email(email)
                           )
         user.set_password(password)
         user.save(using=self._db)
@@ -75,6 +70,8 @@ class User(AbstractBaseUser):
     @property
     def is_staff(self):
         # 仅仅超级管理员才有权限进入django admin
+        if not self.is_active:
+            return False
         return self.user_type == UserType.SUPER_ADMIN
 
     class Meta:
@@ -89,7 +86,7 @@ class Profile(models.Model):
     """
     user = models.OneToOneField(User, on_delete=models.CASCADE)
 
-    uid = models.CharField(max_length=64, blank=True, null=True)  # 标识号，可以是学号等
+    uid = models.CharField(max_length=64, blank=True, null=True)  # 标识号，可以是学号,座位号等，预留
     avatar = models.ImageField(upload_to='avatar', blank=True, null=True)
     fullname = models.CharField(max_length=128, default='佚名')
     school = models.CharField(max_length=200, blank=True, null=True)
