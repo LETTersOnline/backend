@@ -71,10 +71,10 @@ class AuthPermission(BasePermission):
 
 class AdminPermission(BasePermission):
     def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.user_type >= UserType.ADMIN
+        return request.user.is_authenticated and request.user.user_type == UserType.SUPER_ADMIN
 
     def has_object_permission(self, request, view, obj):
-        return request.user.is_authenticated and request.user.user_type >= UserType.ADMIN
+        return request.user.is_authenticated and request.user.user_type == UserType.SUPER_ADMIN
 
 
 class OwnerPermission(BasePermission):
@@ -85,9 +85,9 @@ class OwnerPermission(BasePermission):
         if not request.user.is_authenticated:
             return False
 
-        # 不允许非管理员删除
-        if view.action == 'delete':
-            return False
+        # # 不允许非管理员删除
+        # if view.action == 'delete':
+        #     return False
 
         # 如果用户等级高于修改用户，或者为自身，可以更新
         if hasattr(obj, 'user'):

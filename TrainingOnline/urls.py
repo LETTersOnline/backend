@@ -22,7 +22,6 @@ from rest_framework.permissions import AllowAny
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
-from core.views import obtain_jwt_token
 from account.views import GetDynamicPreferences
 
 schema_view = get_schema_view(
@@ -41,14 +40,14 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-
-    path('login/', obtain_jwt_token, name='login'),
-    path('preferences/', GetDynamicPreferences.as_view(), name='preferences'),
-
-    path('api/account/', include('account.urls')),
-
     path('doc2/', schema_view.with_ui('swagger', cache_timeout=None), name='schema-swagger-ui'),
     path('doc1/', schema_view.with_ui('redoc', cache_timeout=None), name='schema-redoc'),
+
+    # top api
+    path('api/preferences/', GetDynamicPreferences.as_view(), name='preferences'),
+
+    # module based api
+    path('api/account/', include('account.urls')),
 ]
 
 if settings.DEBUG:

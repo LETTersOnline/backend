@@ -36,6 +36,9 @@ class User(AbstractBaseUser):
     AbstractBaseUser:
         is_active:
         last_login:
+    username不支持用户进行修改
+    email可修改
+    user_type, is_active 管理权限可修改
     """
     objects = CustomUserManager()
 
@@ -88,6 +91,7 @@ class Profile(models.Model):
 
     uid = models.CharField(max_length=64, blank=True, null=True)  # 标识号，可以是学号,座位号等，预留
     avatar = models.ImageField(upload_to='avatar', blank=True, null=True)
+    nickname = models.CharField(max_length=128, default='nick name')
     fullname = models.CharField(max_length=128, default='佚名')
     school = models.CharField(max_length=200, blank=True, null=True)
     major = models.CharField(max_length=200, blank=True, null=True)
@@ -125,7 +129,7 @@ class Profile(models.Model):
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
-        Profile.objects.create(user=instance)
+        Profile.objects.create(user=instance, nickname=instance.username)
 
 
 @receiver(post_save, sender=User)

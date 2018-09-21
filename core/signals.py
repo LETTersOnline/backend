@@ -23,7 +23,8 @@ def log_user_logged_in_success(sender, user, request, **kwargs):
                                                     user_agent_info=user_agent_info,
                                                     status=UserLoginActivity.SUCCESS)
         user_login_activity_log.save()
-        User.objects.filter(id=user.id).update(date_active=user_login_activity_log.login_datetime)
+        User.objects.filter(id=user.id).update(date_active=user_login_activity_log.login_datetime,
+                                               last_login=user_login_activity_log.login_datetime)
     except Exception as e:
         # log the error
         logger.error("log_user_logged_in request: %s, error: %s" % (request, e))
