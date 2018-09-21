@@ -101,6 +101,9 @@ class Profile(models.Model):
     total_score = models.BigIntegerField(default=0)
     submission_number = models.IntegerField(default=0)
 
+    def __str__(self):
+        return "{}-{}".format(self.user.username, self.fullname)
+
     def add_accepted_problem_number(self):
         self.accepted_number = models.F("accepted_number") + 1
         self.save()

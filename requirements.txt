@@ -8,3 +8,5 @@ drf-yasg[validation]
 Pillow
 django-dynamic-preferences
 rest_condition
+django-filter
+

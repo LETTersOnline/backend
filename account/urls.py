@@ -9,7 +9,8 @@ urlpatterns = [
     path('register/', views.UserRegisterAPI.as_view(), name='register'),
     path('login/', views.ObtainJWTView.as_view(), name='login'),
     path('update-password/', views.UpdatePasswordAPI.as_view(), name='update-password'),
-    path('user/<int:pk>/', views.ViewUpdateUserAPI.as_view(), name='user'),
+    path('user/<int:pk>/', views.RetrieveUpdateUserAPI.as_view(), name='user'),
+    path('users/', views.ListUserAPI.as_view(), name='users'),
     # path('refresh/', refresh_jwt_token, name='refresh'),
     # path('verify/', verify_jwt_token, name='verify'),
 ]

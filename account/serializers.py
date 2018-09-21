@@ -15,13 +15,18 @@ class CustomDateTimeField(serializers.DateTimeField):
         return naturaltime(value)
 
 
-class UserRegisterSerializer(serializers.Serializer):
+class UserRegisterSerializer(serializers.ModelSerializer):
+    id = serializers.ReadOnlyField()
     email = serializers.EmailField(max_length=64)
     username = serializers.CharField(max_length=32)
-    password = serializers.CharField(min_length=6)
-    confirm_password = serializers.CharField(min_length=6)
+    password = serializers.CharField(min_length=6, write_only=True)
+    confirm_password = serializers.CharField(min_length=6, write_only=True)
     # 支持注册码
     code = serializers.CharField(max_length=20, required=False, allow_blank=True)
+
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'email', 'password', 'confirm_password', 'code')
 
     def validate_username(self, value):
         if User.objects.filter(username=value).exists():
@@ -55,10 +60,6 @@ class UserRegisterSerializer(serializers.Serializer):
 
         return data
 
-    def create(self, validated_data):
-        print(validated_data)
-        return User.objects.create_user(**validated_data)
-
 
 class ChangePasswordSerializer(serializers.Serializer):
     """
@@ -87,6 +88,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    date_joined = CustomDateTimeField()
+    date_active = CustomDateTimeField()
     profile = UserProfileSerializer()
 
     def update(self, instance, validated_data):

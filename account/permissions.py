@@ -95,3 +95,22 @@ class OwnerPermission(BasePermission):
         if isinstance(obj, User):
             return request.user == obj or request.user.user_type > obj.user_type
         return False
+
+
+class GetPermission(BasePermission):
+    def has_permission(self, request, view):
+        if request.method == 'GET':
+            return True
+        return request.user.is_authenticated
+
+    def has_object_permission(self, request, view, obj):
+        if request.method == 'GET':
+            return True
+        if not request.user.is_authenticated:
+            return False
+        # 如果用户等级高于修改用户，或者为自身，可以更新
+        if hasattr(obj, 'user'):
+            return request.user == obj.user or request.user.user_type > obj.user.user_type
+        if isinstance(obj, User):
+            return request.user == obj or request.user.user_type > obj.user_type
+        return request.user.user_type == UserType.SUPER_ADMIN
