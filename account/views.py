@@ -1,19 +1,19 @@
 from django.contrib.auth.password_validation import password_changed
-from django_filters.rest_framework import DjangoFilterBackend, filters
-from rest_condition import Or
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import serializers
 from rest_framework import status
 from rest_framework.filters import SearchFilter
 from rest_framework.generics import CreateAPIView, GenericAPIView, ListAPIView, RetrieveUpdateAPIView
+from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework_jwt.views import ObtainJSONWebToken
+from rest_framework_jwt.serializers import VerifyJSONWebTokenSerializer
+from rest_framework_jwt.views import ObtainJSONWebToken, JSONWebTokenAPIView
 
 from account.models import User
-from account.permissions import OwnerPermission, AdminPermission, GetPermission
-from account.serializers import UserRegisterSerializer, ChangePasswordSerializer, UserSerializer
+from account.permissions import GetPermission
+from account.serializers import UserRegisterSerializer, ChangePasswordSerializer, UserSerializer, JWTLoginSerializer
 from core.constants import UserType
-from core.serializers import JWTSerializer
 
 
 class UserRegisterAPI(CreateAPIView):
@@ -25,12 +25,20 @@ class UserRegisterAPI(CreateAPIView):
     serializer_class = UserRegisterSerializer
 
 
-class ObtainJWTView(ObtainJSONWebToken):
+class UserLoginView(ObtainJSONWebToken):
     """
     用户登陆API
     获取JWT token，保存在客户端
     """
-    serializer_class = JWTSerializer
+    serializer_class = JWTLoginSerializer
+
+
+class UserVerifyTokenView(JSONWebTokenAPIView):
+    """
+    API View that checks the veracity of a token, returning the token if it
+    is valid.
+    """
+    serializer_class = VerifyJSONWebTokenSerializer
 
 
 class UpdatePasswordAPI(GenericAPIView):
@@ -72,6 +80,7 @@ class RetrieveUpdateUserAPI(RetrieveUpdateAPIView):
     queryset = User.objects.filter(is_active=True)
     permission_classes = [GetPermission]
     serializer_class = UserSerializer
+    parser_classes = [MultiPartParser]
 
 
 class ListUserAPI(ListAPIView):

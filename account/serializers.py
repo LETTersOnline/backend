@@ -1,11 +1,12 @@
-from django.contrib.humanize.templatetags.humanize import naturaltime
+from django.contrib.auth import authenticate, user_login_failed, user_logged_in
 from django.contrib.auth.password_validation import validate_password
-from rest_framework import serializers
-
-from core.constants import RegisterMethod
-from account.models import User, Profile
-
+from django.contrib.humanize.templatetags.humanize import naturaltime
 from dynamic_preferences.registries import global_preferences_registry
+from rest_framework import serializers
+from rest_framework_jwt.serializers import JSONWebTokenSerializer, jwt_payload_handler, jwt_encode_handler
+
+from account.models import User, Profile
+from core.constants import RegisterMethod
 
 global_preferences = global_preferences_registry.manager()
 
@@ -60,6 +61,9 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
         return data
 
+    def create(self, validated_data):
+        return User.objects.create_user(**validated_data)
+
 
 class ChangePasswordSerializer(serializers.Serializer):
     """
@@ -92,9 +96,18 @@ class UserSerializer(serializers.ModelSerializer):
     date_active = CustomDateTimeField()
     profile = UserProfileSerializer()
 
+    def validate(self, attrs):
+        print('attrs: ', attrs)
+        print(attrs)
+        for k in attrs:
+            print(k, ': ', attrs[k])
+        return attrs
+
     def update(self, instance, validated_data):
-        profile_data = validated_data.pop('profile')
+        print("validated data: ", validated_data)
+        profile_data = validated_data.pop('profile', {})
         profile = instance.profile
+        print('profile: ', profile_data)
         for k, v in profile_data.items():
             setattr(profile, k, v)
         profile.save()
@@ -110,3 +123,64 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('id', 'username', 'email', 'profile',
                   'date_joined', 'date_active', 'user_type', 'is_active')
         read_only_fields = ('id', 'username', 'date_joined', 'date_active', 'user_type', 'is_active')
+
+
+class UserMinimalSerializer(serializers.ModelSerializer):
+    """
+    exclude user profile
+    only allow email writeable
+    """
+    date_joined = CustomDateTimeField()
+    date_active = CustomDateTimeField()
+
+    def update(self, instance, validated_data):
+        if User.objects.filter(email=validated_data.get('email', None)).exclude(id=instance.id).exists():
+            raise ValueError('email exist')
+        return super().update(instance, validated_data)
+
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'email',
+                  'date_joined', 'date_active', 'user_type', 'is_active')
+        read_only_fields = ('id', 'username', 'date_joined', 'date_active', 'user_type', 'is_active')
+
+
+class JWTLoginSerializer(JSONWebTokenSerializer):
+    def validate(self, attrs):
+        credentials = {
+            self.username_field: attrs.get(self.username_field),
+            'password': attrs.get('password')
+        }
+
+        if all(credentials.values()):
+            user = authenticate(request=self.context['request'], **credentials)
+            print(user)
+            if user:
+                if not user.is_active:
+                    # 发送登陆失败信号
+                    user_login_failed.send(sender=user.__class__,
+                                           credentials=credentials,
+                                           request=self.context['request'])
+                    msg = 'User account is disabled.'
+                    raise serializers.ValidationError(msg)
+
+                payload = jwt_payload_handler(user)
+
+                # 发送登陆成功信号
+                user_logged_in.send(sender=user.__class__, request=self.context['request'], user=user)
+                user = User.objects.get(id=user.id)
+                return {
+                    'token': jwt_encode_handler(payload),
+                    'user': user,
+                }
+            else:
+                # 发送登陆失败信号
+                user_login_failed.send(sender=user.__class__,
+                                       credentials=credentials,
+                                       request=self.context['request'])
+                msg = 'Unable to log in with provided credentials.'
+                raise serializers.ValidationError(msg)
+        else:
+            msg = 'Must include "{username_field}" and "password".'
+            msg = msg.format(username_field=self.username_field)
+            raise serializers.ValidationError(msg)

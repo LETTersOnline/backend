@@ -8,7 +8,7 @@
 使用djangorestframework-jwt作为前后端分离认证的凭证
 
 利用/auth/login/获取token
-
+    
 ```
 curl -X POST -d "handle=admin&password=password123" http://localhost:8000/auth/login/
 ```
