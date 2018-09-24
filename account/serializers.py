@@ -65,86 +65,6 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         return User.objects.create_user(**validated_data)
 
 
-class ChangePasswordSerializer(serializers.Serializer):
-    """
-    Serializer for password change endpoint.
-    """
-    id = serializers.IntegerField()
-    old_password = serializers.CharField()
-    new_password = serializers.CharField()
-
-    def validate_id(self, value):
-        if User.objects.filter(id=value).exists():
-            return value
-        raise serializers.ValidationError("no such user")
-
-    def validate_new_password(self, value):
-        validate_password(value)
-        return value
-
-
-class UserProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Profile
-        fields = ('uid', 'avatar', 'nickname', 'fullname', 'school', 'major', 'mood',
-                  'accepted_number', 'total_score', 'submission_number')
-        read_only_fields = ('accepted_number', 'total_score', 'submission_number')
-
-
-class UserSerializer(serializers.ModelSerializer):
-    date_joined = CustomDateTimeField()
-    date_active = CustomDateTimeField()
-    profile = UserProfileSerializer()
-
-    def validate(self, attrs):
-        print('attrs: ', attrs)
-        print(attrs)
-        for k in attrs:
-            print(k, ': ', attrs[k])
-        return attrs
-
-    def update(self, instance, validated_data):
-        print("validated data: ", validated_data)
-        profile_data = validated_data.pop('profile', {})
-        profile = instance.profile
-        print('profile: ', profile_data)
-        for k, v in profile_data.items():
-            setattr(profile, k, v)
-        profile.save()
-
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
-
-        return instance
-
-    class Meta:
-        model = User
-        fields = ('id', 'username', 'email', 'profile',
-                  'date_joined', 'date_active', 'user_type', 'is_active')
-        read_only_fields = ('id', 'username', 'date_joined', 'date_active', 'user_type', 'is_active')
-
-
-class UserMinimalSerializer(serializers.ModelSerializer):
-    """
-    exclude user profile
-    only allow email writeable
-    """
-    date_joined = CustomDateTimeField()
-    date_active = CustomDateTimeField()
-
-    def update(self, instance, validated_data):
-        if User.objects.filter(email=validated_data.get('email', None)).exclude(id=instance.id).exists():
-            raise ValueError('email exist')
-        return super().update(instance, validated_data)
-
-    class Meta:
-        model = User
-        fields = ('id', 'username', 'email',
-                  'date_joined', 'date_active', 'user_type', 'is_active')
-        read_only_fields = ('id', 'username', 'date_joined', 'date_active', 'user_type', 'is_active')
-
-
 class JWTLoginSerializer(JSONWebTokenSerializer):
     def validate(self, attrs):
         credentials = {
@@ -184,3 +104,118 @@ class JWTLoginSerializer(JSONWebTokenSerializer):
             msg = 'Must include "{username_field}" and "password".'
             msg = msg.format(username_field=self.username_field)
             raise serializers.ValidationError(msg)
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    """
+    Serializer for password change endpoint.
+    """
+    id = serializers.IntegerField()
+    old_password = serializers.CharField()
+    new_password = serializers.CharField()
+
+    def validate_id(self, value):
+        if User.objects.filter(id=value).exists():
+            return value
+        raise serializers.ValidationError("no such user")
+
+    def validate_new_password(self, value):
+        validate_password(value)
+        return value
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ('uid', 'avatar', 'nickname', 'fullname', 'school', 'major', 'mood',
+                  'accepted_number', 'total_score', 'submission_number')
+        read_only_fields = ('accepted_number', 'total_score', 'submission_number')
+
+
+class UserSerializer(serializers.ModelSerializer):
+    date_joined = CustomDateTimeField()
+    date_active = CustomDateTimeField()
+    last_login = CustomDateTimeField()
+    profile = UserProfileSerializer()
+
+    def validate(self, attrs):
+        print('attrs: ', attrs)
+        print(attrs)
+        for k in attrs:
+            print(k, ': ', attrs[k])
+        return attrs
+
+    def update(self, instance, validated_data):
+        print("validated data: ", validated_data)
+        profile_data = validated_data.pop('profile', {})
+        profile = instance.profile
+        print('profile: ', profile_data)
+        for k, v in profile_data.items():
+            setattr(profile, k, v)
+        profile.save()
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        return instance
+
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'email', 'profile',
+                  'date_joined', 'date_active', 'user_type', 'is_active', 'last_login')
+        read_only_fields = ('id', 'username', 'date_joined', 'date_active', 'user_type', 'is_active', 'last_login')
+
+
+class UserMinimalSerializer(serializers.ModelSerializer):
+    """
+    exclude user profile
+    only allow email writeable
+    """
+    date_joined = CustomDateTimeField()
+    date_active = CustomDateTimeField()
+
+    def update(self, instance, validated_data):
+        if User.objects.filter(email=validated_data.get('email', None)).exclude(id=instance.id).exists():
+            raise ValueError('email exist')
+        return super().update(instance, validated_data)
+
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'email',
+                  'date_joined', 'date_active', 'user_type', 'is_active')
+        read_only_fields = ('id', 'username', 'date_joined', 'date_active', 'user_type', 'is_active')
+
+
+class UserRankSerializer(serializers.ModelSerializer):
+    nickname = serializers.SerializerMethodField()
+    fullname = serializers.SerializerMethodField()
+    avatar = serializers.SerializerMethodField()
+    total_score = serializers.SerializerMethodField()
+    accepted_number = serializers.SerializerMethodField()
+    submission_number = serializers.SerializerMethodField()
+
+    def get_total_score(self, obj):
+        return obj.profile.total_score
+
+    def get_accepted_number(self, obj):
+        return obj.profile.accepted_number
+
+    def get_submission_number(self, obj):
+        return obj.profile.submission_number
+
+    def get_nickname(self, obj):
+        return obj.profile.nickname
+
+    def get_fullname(self, obj):
+        return obj.profile.fullname
+
+    def get_avatar(self, obj):
+        return obj.profile.avatar
+
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'nickname', 'fullname', 'avatar',
+                  'total_score', 'accepted_number', 'submission_number')
+        read_only_fields = ('id', 'username', 'nickname', 'fullname', 'avatar',
+                            'total_score', 'accepted_number', 'submission_number')
